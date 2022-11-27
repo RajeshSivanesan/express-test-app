@@ -1,7 +1,7 @@
 import App from "../../app";
 
 export class EventsService {
-  constructor(protected app: App) {}
+  constructor(protected app: App) { }
 
   async getWarmupEvents() {
     return await this.app.getDataSource().event.findMany();
@@ -85,7 +85,35 @@ export class EventsService {
      */
 
   async getEventsWithWorkshops() {
-    throw new Error('TODO task 1');
+    try {
+      const result = await this.app.getDataSource().event.findMany();
+
+      const promise = (r: any) => {
+        return this.app.getDataSource().workshop.findMany({
+          where: {
+            eventId: r.id
+          }
+        })
+      }
+
+      const promises = result.map((r: any) => promise(r))
+
+      const finalResult: any = [];
+
+      return Promise.all(promises)
+        .then(response => {
+          response.forEach((r: any, index: any) => {
+            const item = {
+              ...result[index],
+              workshops: r
+            }
+            finalResult.push(item);
+          })
+          return finalResult;
+        })
+    } catch (ex) {
+      console.log(ex);
+    }
   }
 
   /* TODO: complete getFutureEventWithWorkshops so that it returns events with workshops, that have not yet started
@@ -155,6 +183,53 @@ export class EventsService {
     ```
      */
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    try {
+      const result = await this.app.getDataSource().event.findMany();
+
+      // find all
+      const workshops = (r: any) => {
+        return this.app.getDataSource().workshop.findMany({
+          where: {
+            eventId: r.id
+          }
+        })
+      }
+
+      // find only first one
+      const promise = (r: any) => {
+        return this.app.getDataSource().workshop.findFirst({
+          where: {
+            eventId: r.id,
+            start: {
+              gt: new Date()
+            }
+          }
+        })
+      }
+
+      const promises = result.map((r: any) => promise(r))
+
+      const finalResult: any = [];
+
+      return Promise.all(promises)
+        .then(async (response) => {
+          const allWorkshops = await Promise.all(result.map((w: any) => workshops(w)));
+          response.forEach(async (r: any, index: any) => {
+            if (r) {
+
+              console.log(allWorkshops)
+
+              const item = {
+                ...result[index],
+                workshops: allWorkshops[index]
+              }
+              finalResult.push(item);
+            }
+          })
+          return finalResult;
+        })
+    } catch (ex) {
+      console.log(ex);
+    }
   }
 }

@@ -3,6 +3,15 @@ import { PrismaClient } from "@prisma/client";
 
 export default class implements Migration {
   async up(prisma: PrismaClient) {
+    try {
+      await prisma.$queryRaw`CREATE TABLE "movies" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "name" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )`;
+    } catch (ex) {
+
+    }
     /**
      # ToDo: Create a migration that creates all tables for the following user stories
 
